@@ -4,12 +4,14 @@ class Mur{
   float heightMur;
   PVector centerMur;
   color colorMur; 
+  boolean estsupprime;
   
   Mur(float widthMur,float heightMur,PVector centerMur, color colorMur){
     this.widthMur=widthMur;
     this.heightMur=heightMur;
     this.centerMur=centerMur;
     this.colorMur=colorMur;
+    this.estsupprime=false;
   }
   
   void drawMur(){
@@ -30,6 +32,7 @@ class Mur{
     
     if (bottomBallon>topMur && rightBallon> leftMur && bottomMur> topBallon && rightMur> leftBallon){
       colorMur=color(255,255,255);
+      
      }
     
   }

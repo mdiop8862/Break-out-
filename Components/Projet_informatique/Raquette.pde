@@ -20,11 +20,17 @@ class Raquette{
     rect(centerRaquette.x,centerRaquette.y,widthRaquette,heightRaquette);
     noStroke();
   }
+  
   void moveRaquette(){
     centerRaquette.x+=speed;
     if (centerRaquette.x+widthRaquette/2>width || centerRaquette.x<widthRaquette/2 ){
       speed=-speed-1;  
     }
-    
   }
+  
+  /*
+  void moveRaquette(){
+    centerRaquette.x=mouseX;  
+  }
+  */
 }

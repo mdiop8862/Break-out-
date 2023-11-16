@@ -44,5 +44,10 @@ class Ballon {
      }
     
   }
+  void lose(){
+    if (centerBallon.y>height-diameter/2){
+      noLoop();
+    }
+  }
   
 }
