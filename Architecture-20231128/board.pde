@@ -36,7 +36,7 @@ class Board
     }
   }
 
-  void chargerPlateauFichier(String file) {
+  void loadPlateau(String file) {
     String[] lines = loadStrings(file);
     int nbLines = lines.length;
     int nbColumns =  lines[1].length();
@@ -106,6 +106,17 @@ class Board
     }
   }
 
+  boolean isValid(int cellX, int cellY) {
+    if (cellX<0 || cellX>=board._nbCellsX || cellY<0 || cellY>=board._nbCellsY) {
+      return false;
+    }
+    return isEmpty(cellX, cellY);
+  }
+
+  boolean monsterMeetHero(Hero hero, Monster monster) {
+    return hero._cellX == monster._cellX && hero._cellY == monster._cellY;
+  }
+
   PVector getCellCenter(int i, int j) {
 
     spriteX=i*_cellSize+_cellSize/2;
@@ -129,8 +140,8 @@ class Board
     PImage sprite=atlas.get(int(spriteX), int(spriteY), sizeSpriteX, sizeSpriteY);
     return sprite;
   }
-  
-  boolean isEmpty(int cellX, int cellY){
+
+  boolean isEmpty(int cellX, int cellY) {
     return _cells[cellX][cellY] == TypeCell.EMPTY;
   }
 
@@ -143,13 +154,13 @@ class Board
       getsprite(atlas1, 2, 7, 16),
       getsprite(atlas1, 5, 3, 16),
       getsprite(atlas1, 3, 5, 16),
-      //getsprite(atlas2, 0, 3, 24),
-      //getsprite(atlas2, 1, 0, 24),
       getsprite(atlas1, 6, 6, 16),
       getsprite(atlas1, 5, 1, 16),
       getsprite(atlas1, 5, 0, 16),
       getsprite(atlas1, 0, 1, 16),
       getsprite(atlas1, 0, 0, 16),
+      getsprite(atlas1, 0, 7, 16),
+      getsprite(atlas1, 2, 7, 16),
     };
   }
 
@@ -157,11 +168,10 @@ class Board
     for (int i=0; i<_nbCellsX; i++) {
       for (int j=0; j<_nbCellsY; j++) {
 
-        PVector Cellsprite = getCellCenter(i, j);
+        PVector cellSprite = getCellCenter(i, j);
         PImage sprite;
         switch(_cells[i][j]) {
         case EMPTY :
-          fill(0, 255, 255);
           sprite=spriteListe[0];
           break;
         case WALL:
@@ -169,19 +179,16 @@ class Board
           sprite=spriteListe[1];
           break;
         case DESTRUCTIBLE_WALL:
-          fill(157);
           sprite=spriteListe[2];
           break;
         case EXIT_DOOR:
-          fill(90);
           sprite=spriteListe[3];
           break;
         default:
-          fill(0, 255, 255);
           sprite=spriteListe[0];
           break;
         }
-        image(sprite, Cellsprite.x+ _drawPosition.x, Cellsprite.y+_drawPosition.y,_cellSize, _cellSize);
+        image(sprite, cellSprite.x + _drawPosition.x, cellSprite.y + _drawPosition.y, _cellSize, _cellSize);
       }
     }
   }

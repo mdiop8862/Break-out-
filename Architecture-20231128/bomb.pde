@@ -1,93 +1,104 @@
 class Bomb {
-  float to;
   float _timeToExplode;
   int _cellX, _cellY;
   int _explosionRadius;
   PVector _position;
   boolean isExplosed;
+  boolean isPutBomb;
+  boolean b;
 
-  Bomb() {
-    to = millis();
-    _timeToExplode = 5000;
-    _explosionRadius = 9;
+  int maxBombsCount;
+
+  Bomb(float timeToExplode) {
+    _timeToExplode = timeToExplode;
+    _explosionRadius = 3;
     _cellX = -100;
     _cellY = -100;
     isExplosed = false;
+    isPutBomb = false;
+
+    maxBombsCount = 2;
   }
 
   void putBomb(Hero hero) {
     _cellX = hero._cellX;
     _cellY = hero._cellY;
-    to = millis();
-    println("pose la bombe en : ", _cellX, " ", _cellY);
+    isPutBomb = true;
   }
 
-  void explosionBomb(Board board, Hero hero, Monstre [] monstres) {
+  void explosionBomb(Board board) {
     //Les cellules qui sont à droite de la Bombe
-    for (Monstre monstre : monstres) {
-    explosionDirection(board, hero, monstre ,1, 0);
+    explosionDirection(board, 1, 0);
 
     //Les cellules qui sont à gauche de la Bombe
-    explosionDirection(board, hero, monstre, -1, 0);
+    explosionDirection(board, -1, 0);
 
     //Les cellules qui sont en haut de la Bombe
-    explosionDirection(board, hero, monstre ,0, 1);
+    explosionDirection(board, 0, 1);
 
     //Les cellules qui sont en bas de la Bombe
-    explosionDirection(board, hero, monstre ,0, -1);
+    explosionDirection(board, 0, -1);
 
     // Explosion de la bombe avec une forme de  "+"
+
     drawExplosion(board, 8, 50, 0);
     drawExplosion(board, 11, -50, 0);
     drawExplosion(board, 10, 0, 50);
     drawExplosion(board, 9, 0, -50);
-    }
     //Disparition de la bombe
-    resetPositionOutsideWindow();
+    //resetPositionOutsideWindow();
   }
 
-  void explosionDirection(Board board, Hero hero, Monstre monstre, int j, int k) {
+  void explosionDirection(Board board, int j, int k) {
     for (int i = 1; i <= _explosionRadius; i++) {
       int cellX = _cellX + i * j;
       int cellY = _cellY + i * k;
-      destroyCell(board, hero, cellX, cellY);
-      hero.explosionHero(this, cellX, cellY);
-      monstre.eliminateMonster(cellX, cellY);
-    }
-  }
-  void a(Hero hero, int j, int k) {
-    for (int i = 1; i <= _explosionRadius; i++) {
-      int cellX = _cellX + i * j;
-      int cellY = _cellY + i * k;
-      hero.explosionHero(this,cellX, cellY);
+      destroyCell(board, cellX, cellY);
     }
   }
 
-  void b(Hero hero) {
-    a(hero, 1, 0 );
-    a(hero, -1, 0);
-    a(hero, 0, -1);
-    a(hero, 0, 1);
-  }
 
-  void destroyCell(Board board, Hero hero, int cellX, int cellY) {
+
+  void destroyCell(Board board, int cellX, int cellY) {
     if (cellX >=1 && cellX<board._nbCellsX - 1 && cellY >=1 && cellY<board._nbCellsY - 1) {
-      if (!hero.isEmpty(board, cellX, cellY) && board._cells[cellX][cellY] != TypeCell.EXIT_DOOR) {
+      if ( board._cells[cellX][cellY] == TypeCell.DESTRUCTIBLE_WALL) {
         board._cells[cellX][cellY] = TypeCell.EMPTY;
       }
     }
   }
 
-  void update(Board board, Hero hero, Monstre[] monstres) {
-    if (millis() - to > _timeToExplode) {
-      explosionBomb(board, hero, monstres);
-      //b(hero);
-      isExplosed = true;
-      to = millis();
-    } else {
-      isExplosed = false;
+  void update(Board board, Hero hero, Monster [] monsters, Game game) {
+    if (!isExplosed && isPutBomb) {
+      if (_timeToExplode > 0) {
+        _timeToExplode--;
+      } else if (_timeToExplode == 0) {
+        isExplosed = true;
+        explosionBomb(board);
+        for (Monster monster : monsters) {
+          if (monster.eliminateMonster(bomb)) {
+            monster.isAlive = false;
+            monster.lastPosition = new PVector(monster._cellX, monster._cellY);
+            monster._wasHit = true;
+            monster.resetPositionOutsideWindow();
+          }
+        }
+
+        if (hero.eliminateHero(this)) {
+          hero._wasHit = true;
+          if (game.heroMeetBonus(hero)) {
+            println("Bonnus");
+            hero.bonuscollectedBomb++;
+          }
+        }
+        resetPositionOutsideWindow();
+      }
     }
   }
+
+
+
+
+
 
   void drawIt(Board board, int i) {
     PVector bombeSprite = board.getCellCenter(_cellX, _cellY);
@@ -103,6 +114,7 @@ class Bomb {
   }
 
   void resetPositionOutsideWindow() {
+
     _cellX = -100;
     _cellY = -100;
   }

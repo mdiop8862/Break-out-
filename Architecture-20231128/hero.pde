@@ -7,11 +7,13 @@ class Hero {
   float _size;
   // if hero was hit by a bomb
   boolean _wasHit;
-
+  int life;
+  int score;
   PImage [] heroListe;
-  int to;
   PImage sprite;
   PVector heroDirection;
+  int bonuscollectedBomb;
+  int bombsCount;
   Hero() {
     _size = 24;
     _cellX = 1;
@@ -19,15 +21,23 @@ class Hero {
     _position = new PVector(1, 1);
     _wasHit = false;
     heroDirection = new PVector(1, 0);
-    to = 0;
+    life = 5;
+    score = 0;
+    bonuscollectedBomb = 0;
+    bombsCount = 1;
   }
 
-  void move(Board board, PVector direction) {
+  void move(Board board, PVector direction, float lerpFactor) {
     int cellCurrentX = _cellX + int(direction.x);
     int cellCurrentY = _cellY + int(direction.y);
-    if ((isEmpty(board, cellCurrentX, cellCurrentY)) || isHeroOccupiedCell(board, cellCurrentX, cellCurrentY)) {
-      _cellX = cellCurrentX;
-      _cellY = cellCurrentY;
+
+
+    if ((isEmpty(board, int(cellCurrentX), int(cellCurrentY))) || isHeroOccupiedCell(board, int(cellCurrentX), int(cellCurrentY))) {
+      PVector targetPosition = new PVector(cellCurrentX, cellCurrentY);
+      PVector currentPosition = new PVector(_cellX, _cellY);
+      PVector newPosition = PVector.lerp(currentPosition, targetPosition, lerpFactor);
+      _cellX = round(newPosition.x);
+      _cellY = round(newPosition.y);
       heroDirection = direction;
       //Update hero position in the screen
     }
@@ -44,14 +54,25 @@ class Hero {
     return isValidCell(cellX, cellY) && board._cells[cellX][cellY] == TypeCell.BOMBERMAN;
   }
 
-  void update(Board board, Bomb bomb) {
-    if (eliminateHero(bomb, _cellX, _cellY)) {
-      println('A');
-      eliminate(bomb);
-      //resetPositionOutsideWindow();
+  void update(Board board, Monster [] monsters) {
+    if (bomb.isExplosed) {
+      for (Monster monster : monsters) {
+        if (_wasHit || board.monsterMeetHero(this, monster)) {
+          life--;
+          resetPositionOutsideWindow();
+
+          if (life > 0) {
+            reapper();
+            for (Monster reappermonster : monsters) {
+              reappermonster.reapper();
+            }
+          } else if (life == 0) {
+            noLoop();
+          }
+        }
+      }
     }
   }
-
   void drawIt(Board board) {
     _position = board.getCellCenter(_cellX, _cellY);
     changeSprite();
@@ -67,42 +88,30 @@ class Hero {
     };
   }
 
-  boolean isInExplosionRange(Bomb bomb, int cellX, int cellY) {
-    int distanceX = abs(bomb._cellX - cellX);
-    int distanceY = abs(bomb._cellY - cellY);
-    return distanceX <= bomb._explosionRadius || distanceY <= bomb._explosionRadius || cellY == bomb._cellY || cellX == bomb._cellX;
+  void reapper() {
+    _cellX = 1;
+    _cellY = 1;
+    _position = new PVector(1, 1);
+    _wasHit = false;
+  }
+  
+  int getBombCountWithBonus(){
+  
+    return bombsCount + bonuscollectedBomb;
   }
 
-  void eliminate(Bomb bomb) {
-    //explosionDirection(bomb, 0, 1);
-    //explosionDirection(bomb, 1, 0);
-    //explosionDirection(bomb, 0, -1);
-    //explosionDirection(bomb, -1, 0);
-    /*
-      eliminateDirection(bomb, 0, 1);
-     eliminateDirection(bomb, 1, 0);
-     eliminateDirection(bomb, 0, -1);
-     eliminateDirection(bomb, -1, 0);
-     */
-  }
-  boolean eliminateHero(Bomb bomb, int cellX, int cellY) {
-    int distanceX = abs(bomb._cellX - cellX);
-    int distanceY = abs(bomb._cellY - cellY);
-    return (distanceX <= bomb._explosionRadius  && cellY == bomb._cellY) || (distanceY <= bomb._explosionRadius && cellX == bomb._cellX) ;
-    ///resetPositionOutsideWindow();
+
+  boolean eliminateHero(Bomb bomb) {
+    //Distance entre la position de la bombe et celle du héro
+    int distanceX = abs(bomb._cellX - _cellX);
+    int distanceY = abs(bomb._cellY - _cellY);
+    
+    //si le hero est dans le rayon d'explosion et si elle est dans
+    //le meme ligne ou colonne que la bombe au moment de l'explosion
+    return ((distanceX <= bomb._explosionRadius  && _cellY == bomb._cellY) || (distanceY <= bomb._explosionRadius && _cellX == bomb._cellX));
   }
 
-  void eliminateDirection(Bomb bomb, int j, int k) {
-    for (int i = 1; i <= bomb._explosionRadius; i++) {
-      int cellX = bomb._cellX + i * j;
-      int cellY = bomb._cellY + i * k;
-      //if (isValidCell(cellX, cellY)) {
-      eliminateHero(bomb, cellX, cellY);
-      //} else {
-      //break;
-      //}
-    }
-  }
+
   boolean isValidCell(int cellX, int cellY) {
     return cellX>=0 && cellX<board._nbCellsX && cellY>=0 && cellY<board._nbCellsY;
   }
@@ -124,12 +133,5 @@ class Hero {
   void resetPositionOutsideWindow() {
     _cellX = -100;
     _cellY = -100;
-  }
-
-  void explosionHero(Bomb bomb, int cellX, int cellY) {
-    if (bomb.isExplosed && _cellX == cellX && _cellY == cellY) {
-      _wasHit = true;
-      resetPositionOutsideWindow();
-    }
   }
 }
